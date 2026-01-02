@@ -1,6 +1,34 @@
 # CuteWhisper
 
-A privacy-focused, local dictation tool for Windows that transcribes speech to text using OpenAI's Whisper model. No internet connection required, no accounts, no subscriptions.
+<div align="center">
+
+![CuteWhisper Demo](assets/cute_cat.mp4)
+
+**A free, open-source, and local alternative to SuperWhisper and Whisper.AI** 🎤→📝
+
+Privacy-focused Windows dictation tool that transcribes speech to text using OpenAI's Whisper model. No internet connection required, no accounts, no subscriptions, no fees.
+
+[![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Platform: Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](https://www.windows.com/)
+
+**Why CuteWhisper?**
+- ✅ **100% Free & Open Source** (AGPLv3)
+- ✅ **Works Offline** - No internet needed after initial model download
+- ✅ **No Subscriptions** - Unlike Whisper.AI and SuperWhisper
+- ✅ **Privacy First** - All processing happens locally on your machine
+- ✅ **No Accounts** - No sign-up required
+- ✅ **Customizable** - Change models, hotkeys, audio devices, and more
+
+</div>
+
+---
+
+## Demo
+
+[![Watch Demo](assets/demo.mp4)](assets/demo.mp4)
+
+*Click above to watch CuteWhisper in action!*
 
 ## Features
 
