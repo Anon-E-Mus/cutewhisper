@@ -159,12 +159,12 @@ exe_error.log
 # User configuration (don't commit personal settings)
 config/user_config.yaml
 
-# Assets - video files are large
-assets/*.mp4
+# Assets - exclude large files except videos
 assets/*.avi
 assets/*.mov
 assets/*.mkv
 assets/*.flv
+# NOTE: assets/*.mp4 files are included for demo videos
 
 # Build output
 dist/
