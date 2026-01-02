@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![CuteWhisper Demo](assets/cute_cat.mp4)
+<img src="assets/cute_cat.gif" width="400" alt="CuteWhisper Demo">
 
 **A free, open-source, and local alternative to SuperWhisper and Whisper.AI** 🎤→📝
 
@@ -26,9 +26,9 @@ Privacy-focused Windows dictation tool that transcribes speech to text using Ope
 
 ## Demo
 
-[![Watch Demo](assets/demo.mp4)](assets/demo.mp4)
+<img src="assets/demo.gif" width="600" alt="CuteWhisper Demo">
 
-*Click above to watch CuteWhisper in action!*
+*Watch CuteWhisper in action!*
 
 ## Features
 

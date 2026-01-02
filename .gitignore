@@ -159,12 +159,16 @@ exe_error.log
 # User configuration (don't commit personal settings)
 config/user_config.yaml
 
-# Assets - exclude large files except videos
+# Assets - MP4 files are for local exe building only (too large for git)
+assets/*.mp4
+
+# Other large video files
 assets/*.avi
 assets/*.mov
 assets/*.mkv
 assets/*.flv
-# NOTE: assets/*.mp4 files are included for demo videos
+
+# NOTE: assets/*.gif files are included for README demos
 
 # Build output
 dist/
