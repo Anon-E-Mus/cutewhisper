@@ -159,16 +159,16 @@ exe_error.log
 # User configuration (don't commit personal settings)
 config/user_config.yaml
 
-# Assets - MP4 files are for local exe building only (too large for git)
-assets/*.mp4
-
-# Other large video files
+# Assets - videos
+# Keep cute_cat.mp4 (needed for audio visualizer in exe)
+# Keep demo.gif and cute_cat.gif (for README)
+# Exclude other large video formats
 assets/*.avi
 assets/*.mov
 assets/*.mkv
 assets/*.flv
 
-# NOTE: assets/*.gif files are included for README demos
+# NOTE: cute_cat.mp4, cute_cat.gif, and demo.gif are included
 
 # Build output
 dist/
