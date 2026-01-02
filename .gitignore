@@ -1,8 +1,13 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# C extensions
+*.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -16,50 +21,189 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Virtual Environment
+# PyInstaller
+*.spec
+!CuteWhisper.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
 venv/
 ENV/
-env/
+env.bak/
+venv.bak/
 
-# CuteWhisper specific
-models/
-temp/
-logs/
-data/
-*.wav
-*.log
-*.db
+# Spyder project settings
+.spyderproject
+.spyproject
 
-# User config
-config/user_config.yaml
+# Rope project settings
+.ropeproject
 
-# Assets (videos, images - will add later)
-assets/*.mp4
-assets/*.avi
-assets/*.mov
-assets/*.mkv
+# mkdocs documentation
+/site
 
-# IDE
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# IDE specific files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
+# OS specific
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
+# CuteWhisper specific files
 
-# Build artifacts
-build/
+# Downloaded Whisper models (too large for git)
+models/
+
+# Temporary audio files
+temp/
+*.wav
+*.mp3
+*.flac
+
+# Database and user data
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Application logs
+logs/
+*.log
+exe_output.log
+exe_error.log
+
+# User configuration (don't commit personal settings)
+config/user_config.yaml
+
+# Assets - video files are large
+assets/*.mp4
+assets/*.avi
+assets/*.mov
+assets/*.mkv
+assets/*.flv
+
+# Build output
 dist/
-*.manifest
+*.exe
+*.dll
+*.dylib
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Keep important files
+!config/default_config.yaml
+!config/.gitkeep
+!.gitignore
+!README.md
+!LICENSE
+!CHANGELOG.md
+!BUILD.md
+!MODEL_RELOAD_FEATURE.md
+!TOAST_AND_MODEL_SIZE_FIXES.md
+!requirements.txt
+!CuteWhisper.spec
+!build.bat
+!main.py

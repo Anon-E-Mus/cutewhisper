@@ -51,10 +51,20 @@ if errorlevel 1 (
 
 REM Copy necessary files
 echo.
-echo [5/5] Copying configuration files...
+echo [5/5] Copying configuration files and assets...
+
+REM Copy config files
 if not exist "dist\config" mkdir "dist\config"
 copy "config\default_config.yaml" "dist\config\" >nul
 
+REM CRITICAL: Copy assets folder (for video animation)
+if exist "assets" (
+    if not exist "dist\assets" mkdir "dist\assets"
+    copy "assets\cute_cat.mp4" "dist\assets\" >nul
+    echo [INFO] Assets copied successfully
+)
+
+REM Create required directories
 if not exist "dist\models" mkdir "dist\models"
 if not exist "dist\temp" mkdir "dist\temp"
 if not exist "dist\data" mkdir "dist\data"

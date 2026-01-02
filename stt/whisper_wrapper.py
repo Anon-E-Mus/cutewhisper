@@ -44,6 +44,26 @@ class WhisperTranscriber:
             logger.info(f"Model loaded successfully: {self.model_size}")
             print(f"[OK] Model '{self.model_size}' loaded and ready!")
 
+        except OSError as e:
+            # Better error messages for common issues
+            error_str = str(e).lower()
+
+            if "no space left" in error_str or "disk full" in error_str:
+                msg = ("Disk full. Please free up disk space and try again.\n"
+                       f"Whisper models require ~150MB-3GB depending on size.")
+            elif "connection" in error_str or "network" in error_str or "timeout" in error_str:
+                msg = ("Network error. Could not download model.\n"
+                       "Please check your internet connection and try again.")
+            elif "permission" in error_str:
+                msg = ("Permission denied. Could not write to model cache directory.\n"
+                       "Try running as administrator or check folder permissions.")
+            else:
+                msg = f"Model download failed: {e}"
+
+            logger.error(f"Failed to load Whisper model: {e}")
+            self.model_loaded = False
+            raise RuntimeError(msg)
+
         except Exception as e:
             logger.error(f"Failed to load Whisper model: {e}")
             self.model_loaded = False
@@ -118,3 +138,34 @@ class WhisperTranscriber:
             self.model = None
             self.model_loaded = False
             logger.info("Model unloaded from memory")
+
+    def reload_model(self, new_model_size, new_device=None, new_compute_type=None):
+        """
+        Reload Whisper model with new settings
+
+        Args:
+            new_model_size: tiny, base, small, medium, large
+            new_device: cpu or cuda (optional)
+            new_compute_type: int8 or float16 (optional)
+        """
+        logger.info(f"Reloading model: {self.model_size} -> {new_model_size}")
+
+        # Unload old model first
+        if self.model:
+            logger.info("Unloading old model...")
+            del self.model
+            self.model = None
+            self.model_loaded = False
+
+        # Update settings
+        self.model_size = new_model_size
+        if new_device:
+            self.device = new_device
+        if new_compute_type:
+            self.compute_type = new_compute_type
+
+        # Load new model
+        self.load_model()
+
+        logger.info(f"Model reloaded successfully: {new_model_size}")
+        return True

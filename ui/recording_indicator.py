@@ -1,6 +1,7 @@
 """
 Recording Indicator - Floating window showing recording status
 Thread-safe implementation using tkinter's event loop
+Fixed race condition with showing_flag
 """
 
 import tkinter as tk
@@ -22,29 +23,34 @@ class RecordingIndicator:
         self.update_timer = None  # Use tkinter's after() method
         self.root = None  # Reference to main window
         self.lock = threading.Lock()
+        self.showing_flag = False  # CRITICAL FIX: Prevent race condition
 
     def show(self):
         """Thread-safe show - schedules GUI update in main thread"""
         with self.lock:
-            if self.window:
-                return  # Already showing
+            # CRITICAL FIX: Check flag FIRST, before any scheduling
+            if self.showing_flag or self.window:
+                return  # Already showing or scheduled to show
 
-        # Schedule the show in the main thread using root
+            # Mark as showing BEFORE releasing lock
+            self.showing_flag = True
+
+        # Schedule the show in the main thread (outside lock)
         if self.root:
             self.root.after(0, self._show_in_main_thread)
         else:
-            # Fallback: create root and show
             self._show_in_main_thread()
 
     def _show_in_main_thread(self):
         """Actually show the window (must be called from main thread)"""
         with self.lock:
+            # Double-check flag and window
             if self.window:
-                return  # Already showing
+                self.showing_flag = False  # Reset flag
+                return  # Already created
 
-            # CRITICAL: Use Toplevel, not Tk
+            # Create root if needed
             if not self.root:
-                # Create a hidden root if none exists
                 self.root = tk.Tk()
                 self.root.withdraw()
 
@@ -78,14 +84,19 @@ class RecordingIndicator:
             self.start_time = time.time()
             self.running = True
 
-            # CRITICAL FIX: Use after() instead of thread
-            self._schedule_update()
+            # Note: showing_flag remains True since window is now visible
+
+        # Start updates (outside lock)
+        self._schedule_update()
 
     def _schedule_update(self):
         """Schedule next update using tkinter's event loop"""
-        if not self.running or not self.window:
-            return
+        # CRITICAL FIX: Check window state with lock
+        with self.lock:
+            if not self.running or not self.window:
+                return
 
+        # Outside lock - safe to access window
         elapsed = int(time.time() - self.start_time)
         minutes = elapsed // 60
         seconds = elapsed % 60
@@ -94,21 +105,28 @@ class RecordingIndicator:
             self.label.config(text=f"● Recording {minutes:02d}:{seconds:02d}")
 
         # Schedule next update in 1000ms (1 second)
-        self.update_timer = self.window.after(1000, self._schedule_update)
+        if self.window:
+            self.update_timer = self.window.after(1000, self._schedule_update)
 
     def hide(self):
         """Thread-safe hide - schedules GUI update in main thread"""
+        # CRITICAL FIX: Add lock for thread safety
+        with self.lock:
+            if self.showing_flag == False and self.window is None:
+                return  # Already hidden
+
         # Schedule the hide in the main thread
         if self.root:
             self.root.after(0, self._hide_in_main_thread)
         else:
-            # Fallback
-            self._hide_in_main_thread()
+            # No root means no window, nothing to hide
+            logger.debug("No root window, skipping hide")
 
     def _hide_in_main_thread(self):
         """Actually hide the window (must be called from main thread)"""
         with self.lock:
             self.running = False
+            self.showing_flag = False  # CRITICAL: Reset flag
 
             # Cancel any pending updates
             if self.update_timer and self.window:
@@ -119,4 +137,3 @@ class RecordingIndicator:
                 self.window.destroy()
                 self.window = None
                 self.label = None
-

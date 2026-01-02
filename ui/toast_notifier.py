@@ -24,9 +24,12 @@ class ToastNotificationManager:
         if WIN_TOAST_AVAILABLE:
             try:
                 self.toaster = WinToastNotifier()
+                # Test if it actually works (catches pkg_resources errors in bundled exe)
+                # We won't actually show a toast, just test initialization
                 logger.info("Windows toast notifications enabled")
             except Exception as e:
-                logger.warning(f"Windows toast not available: {e}")
+                logger.warning(f"Windows toast initialization failed: {e}")
+                self.toaster = None
                 self.use_windows_toast = False
         else:
             logger.warning("win10toast not installed - using console fallback")
@@ -44,6 +47,10 @@ class ToastNotificationManager:
                 )
             except Exception as e:
                 logger.error(f"Toast failed: {e}")
+                # Disable future toasts if they fail
+                self.use_windows_toast = False
+                self.toaster = None
+                print("[MIC] Recording started...")
         else:
             # Fallback: simple console message
             print("[MIC] Recording started...")
@@ -60,6 +67,9 @@ class ToastNotificationManager:
                 )
             except Exception as e:
                 logger.error(f"Toast failed: {e}")
+                self.use_windows_toast = False
+                self.toaster = None
+                print(f"[OK] Text inserted: {text_preview[:50]}...")
         else:
             print(f"[OK] Text inserted: {text_preview[:50]}...")
 
@@ -75,5 +85,26 @@ class ToastNotificationManager:
                 )
             except Exception as e:
                 logger.error(f"Toast failed: {e}")
+                self.use_windows_toast = False
+                self.toaster = None
+                print(f"[X] Error: {error_message}")
         else:
             print(f"[X] Error: {error_message}")
+
+    def show_info(self, info_message):
+        """Show info notification"""
+        if self.use_windows_toast and self.toaster:
+            try:
+                self.toaster.show_toast(
+                    "CuteWhisper",
+                    info_message,
+                    duration=3,
+                    threaded=True
+                )
+            except Exception as e:
+                logger.error(f"Toast failed: {e}")
+                self.use_windows_toast = False
+                self.toaster = None
+                print(f"[INFO] {info_message}")
+        else:
+            print(f"[INFO] {info_message}")

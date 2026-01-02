@@ -18,23 +18,25 @@ logger = logging.getLogger(__name__)
 class AudioRecorder:
     """Record audio from default microphone (thread-safe)"""
 
-    def __init__(self, sample_rate=16000, channels=1):
+    def __init__(self, sample_rate=16000, channels=1, device=None):
         """
         Initialize audio recorder
 
         Args:
             sample_rate: Whisper prefers 16kHz
             channels: Mono audio (1) or stereo (2)
+            device: Audio device index or name (None = default)
         """
         self.sample_rate = sample_rate
         self.channels = channels
+        self.device = device  # CRITICAL: Store device
         self.recording = False
         self.frames = []
         self.lock = threading.Lock()  # Thread safety
         self.stream = None
         self.audio_callback_func = None  # For visualizer
 
-        logger.info(f"AudioRecorder initialized: {sample_rate}Hz, {channels} channels")
+        logger.info(f"AudioRecorder initialized: {sample_rate}Hz, {channels} channels, device={device}")
 
     def start_recording(self, audio_callback_func=None):
         """
@@ -70,14 +72,41 @@ class AudioRecorder:
                         logger.debug(f"Audio callback error: {e}")
 
             try:
-                # CRITICAL FIX: Use float32 dtype (sounddevice default)
-                # Will convert to int16 when saving to WAV
-                self.stream = sd.InputStream(
-                    samplerate=self.sample_rate,
-                    channels=self.channels,
-                    dtype=np.float32,  # CRITICAL: Fixed from np.int16
-                    callback=audio_callback
-                )
+                # Build stream parameters
+                stream_params = {
+                    'samplerate': self.sample_rate,
+                    'channels': self.channels,
+                    'dtype': np.float32,
+                    'callback': audio_callback
+                }
+
+                # CRITICAL FIX: Add device if specified
+                if self.device is not None:
+                    # Try to find device by name or index
+                    devices = sd.query_devices()
+
+                    # Check if device is an index (int)
+                    if isinstance(self.device, int):
+                        # Validate index exists
+                        if 0 <= self.device < len(devices):
+                            stream_params['device'] = self.device
+                            logger.info(f"Using device index: {self.device} ({devices[self.device]['name']})")
+                        else:
+                            logger.warning(f"Device index {self.device} out of range, using default")
+                    else:
+                        # Device is a name string, find index
+                        device_found = False
+                        for i, dev in enumerate(devices):
+                            if dev['name'] == self.device and dev['max_input_channels'] > 0:
+                                stream_params['device'] = i
+                                logger.info(f"Using device: {dev['name']} (index {i})")
+                                device_found = True
+                                break
+
+                        if not device_found:
+                            logger.warning(f"Device '{self.device}' not found, using default")
+
+                self.stream = sd.InputStream(**stream_params)
                 self.stream.start()
                 logger.info("Recording started")
 

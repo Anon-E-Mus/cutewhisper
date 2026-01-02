@@ -109,10 +109,10 @@ class SettingsWindow:
         clipboard_frame = ttk.LabelFrame(parent, text="Clipboard", padding=10)
         clipboard_frame.pack(fill='x', padx=10, pady=10)
 
-        preserve_var = tk.BooleanVar(value=self.config.get('clipboard.preserve', True))
+        preserve_var = tk.BooleanVar(value=self.config.get('ui.preserve_clipboard', True))
         preserve_check = ttk.Checkbutton(clipboard_frame, text="Preserve clipboard content", variable=preserve_var)
         preserve_check.grid(row=0, column=0, sticky='w', pady=5)
-        self.variables['clipboard.preserve'] = preserve_var
+        self.variables['ui.preserve_clipboard'] = preserve_var
 
     def create_audio_tab(self, parent):
         """Create audio settings tab"""
@@ -156,14 +156,37 @@ class SettingsWindow:
         model_frame.pack(fill='x', padx=10, pady=10)
 
         ttk.Label(model_frame, text="Model Size:").grid(row=0, column=0, sticky='w', pady=5)
-        model_var = tk.StringVar(value=self.config.get('whisper.model_size', 'base'))
+
+        # Model options with sizes for user information
+        model_options = [
+            'tiny (39 MB - fastest)',
+            'base (74 MB - recommended)',
+            'small (244 MB - more accurate)',
+            'medium (769 MB - very accurate)',
+            'large (1.5 GB - most accurate)'
+        ]
+
+        # Extract just the model name for value, but display full string
+        current_model = self.config.get('whisper.model_size', 'base')
+        model_var = tk.StringVar(value=current_model)
+
+        # Find the display value that matches current model
+        display_value = current_model
+        for option in model_options:
+            if option.startswith(current_model):
+                display_value = option
+                break
+
         model_combo = ttk.Combobox(model_frame, textvariable=model_var,
-                                  values=['tiny', 'base', 'small', 'medium', 'large'],
-                                  width=15, state='readonly')
+                                  values=model_options,
+                                  width=30, state='readonly')
+        model_combo.set(display_value)  # Set to full display value
         model_combo.grid(row=0, column=1, sticky='w', pady=5)
+
+        # Store just the model name (before the space) for saving
         self.variables['whisper.model_size'] = model_var
 
-        ttk.Label(model_frame, text="tiny: fastest, large: most accurate").grid(row=1, column=0, columnspan=2, sticky='w', pady=0)
+        ttk.Label(model_frame, text="Larger models = more accurate but slower").grid(row=1, column=0, columnspan=2, sticky='w', pady=0)
 
         # Language
         lang_frame = ttk.LabelFrame(parent, text="Language", padding=10)
@@ -234,14 +257,28 @@ class SettingsWindow:
             new_device = self.variables.get('whisper.device', tk.StringVar(value='cpu')).get()
             gpu_changed = (old_device != new_device)
 
+            # Check if audio device changed
+            old_audio_device = self.config.get('audio.device', None)
+            new_audio_device = self.variables.get('audio.device', tk.StringVar(value='Default')).get()
+            audio_device_changed = (old_audio_device != new_audio_device)
+
+            # Check if sample rate changed
+            old_sample_rate = self.config.get('audio.sample_rate', 16000)
+            new_sample_rate = int(self.variables.get('audio.sample_rate', tk.StringVar(value='16000')).get())
+            sample_rate_changed = (old_sample_rate != new_sample_rate)
+
             # Save all variables
             for key, variable in self.variables.items():
                 if isinstance(variable, tk.BooleanVar):
                     value = variable.get()
                 elif isinstance(variable, tk.StringVar):
                     value = variable.get()
+                    # Extract model name from dropdown (e.g., "tiny (39 MB - fastest)" -> "tiny")
+                    if key == 'whisper.model_size':
+                        # Model name is before the first space
+                        value = value.split()[0] if value else 'base'
                     # Try to convert to int for numeric values
-                    if key == 'audio.sample_rate':
+                    elif key == 'audio.sample_rate':
                         value = int(value)
                 else:
                     value = variable.get()
@@ -254,23 +291,28 @@ class SettingsWindow:
             logger.info("Settings saved successfully")
 
             # Build warning message
-            warnings = []
-            hotkey = self.config.get('hotkey.toggle')
-            original_hotkey = 'ctrl+space'  # Default
+            restart_warnings = []
 
-            if hotkey != original_hotkey:
-                warnings.append("• Hotkey changed")
-
+            # NOTE: Model changes are now applied dynamically (no restart needed)
+            # GPU changes still require restart (PyTorch device initialization)
             if gpu_changed:
-                warnings.append("• GPU setting changed")
+                restart_warnings.append(f"• GPU/CPU setting changed ({old_device} → {new_device})")
 
-            # Call callback if provided
+            # Audio device changes require restart
+            if audio_device_changed:
+                restart_warnings.append(f"• Audio device changed")
+
+            # Sample rate changes require restart
+            if sample_rate_changed:
+                restart_warnings.append(f"• Sample rate changed ({old_sample_rate} → {new_sample_rate} Hz)")
+
+            # Call callback if provided (handles hotkey and model reload)
             if self.on_save_callback:
                 self.on_save_callback()
 
             # Show success message with restart warning if needed
-            if warnings:
-                msg = "Settings saved successfully!\n\nIMPORTANT: Restart required for:\n" + "\n".join(warnings)
+            if restart_warnings:
+                msg = "Settings saved successfully!\n\nIMPORTANT: Restart required for:\n" + "\n".join(restart_warnings)
                 messagebox.showwarning("Settings Saved - Restart Required", msg)
             else:
                 messagebox.showinfo("Settings", "Settings saved successfully!")

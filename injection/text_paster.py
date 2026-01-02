@@ -89,7 +89,20 @@ class TextInjector:
 
             # ENHANCED: Restore old clipboard if enabled
             if self.preserve_clipboard and old_clipboard:
-                time.sleep(0.3)  # Wait for paste to complete
+                # Wait for paste to complete by monitoring clipboard
+                max_wait = 2.0
+                waited = 0.0
+                while waited < max_wait:
+                    time.sleep(0.1)
+                    waited += 0.1
+                    # Check if clipboard changed (paste completed)
+                    current = self._get_clipboard()
+                    if current != text:
+                        # Clipboard changed - paste likely done
+                        logger.debug(f"Paste detected complete after {waited:.1f}s")
+                        break
+
+                # Now restore old clipboard
                 self._copy_to_clipboard(old_clipboard)
                 logger.debug("Restored previous clipboard content")
 

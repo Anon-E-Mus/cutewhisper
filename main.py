@@ -54,7 +54,8 @@ class CuteWhisper:
         # Initialize components
         self.recorder = AudioRecorder(
             sample_rate=self.config.get('audio.sample_rate', 16000),
-            channels=self.config.get('audio.channels', 1)
+            channels=self.config.get('audio.channels', 1),
+            device=self.config.get('audio.device', None)  # CRITICAL: Pass device
         )
 
         self.transcriber = WhisperTranscriber(
@@ -80,7 +81,8 @@ class CuteWhisper:
         self.hotkey_manager = HotkeyManager(
             start_callback=self.start_dictation,
             stop_callback=self.stop_dictation,
-            hotkey_str=self.config.get('hotkey.toggle', 'ctrl+space')
+            hotkey_str=self.config.get('hotkey.toggle', 'ctrl+space'),
+            recorder=self.recorder  # CRITICAL: Pass recorder for recording state check
         )
 
         # Initialize UI components
@@ -279,11 +281,100 @@ class CuteWhisper:
     def on_settings_changed(self):
         """Called when settings are saved"""
         logger.info("Settings changed")
+
+        # Track what needs restart
+        restart_needed = False
+        restart_reasons = []
+
         # Check if hotkey changed
         new_hotkey = self.config.get('hotkey.toggle')
-        if new_hotkey != self.hotkey_manager.hotkey_str:
-            logger.info("Hotkey changed - restart required")
-            self.notifier.show_error("Hotkey changed. Please restart CuteWhisper.")
+        old_hotkey = self.hotkey_manager.hotkey_str
+
+        if new_hotkey != old_hotkey:
+            logger.info(f"Hotkey changed: '{old_hotkey}' -> '{new_hotkey}'")
+
+            # Try to reload hotkey dynamically
+            try:
+                self.hotkey_manager.reload_hotkey(new_hotkey)
+                self.notifier.show_info(f"Hotkey changed to: {new_hotkey}")
+            except RuntimeError as e:
+                # Recording in progress, can't change hotkey
+                logger.warning(f"Cannot change hotkey while recording: {e}")
+                self.notifier.show_error("Cannot change hotkey while recording. Please stop recording first, then change the hotkey.")
+            except Exception as e:
+                # Other errors
+                logger.error(f"Failed to reload hotkey: {e}")
+                self.notifier.show_error("Hotkey changed. Please restart CuteWhisper.")
+
+        # Check if Whisper model changed
+        new_model = self.config.get('whisper.model_size')
+        old_model = self.transcriber.model_size
+
+        if new_model != old_model:
+            # Get display name with size info
+            model_sizes = {
+                'tiny': '39 MB',
+                'base': '74 MB',
+                'small': '244 MB',
+                'medium': '769 MB',
+                'large': '1.5 GB'
+            }
+
+            old_size = model_sizes.get(old_model, '')
+            new_size = model_sizes.get(new_model, '')
+
+            logger.info(f"Model size changed: '{old_model}' -> '{new_model}'")
+            print(f"\n[INFO] Reloading Whisper model: {old_model} ({old_size}) → {new_model} ({new_size})")
+            print("[INFO] This may take 10-30 seconds...")
+
+            try:
+                # Reload the model with new size
+                self.transcriber.reload_model(new_model)
+                print(f"[OK] Model '{new_model}' ({new_size}) loaded successfully!")
+
+                # Show notification with size info
+                if new_size:
+                    self.notifier.show_info(f"Model changed to: {new_model} ({new_size})")
+                else:
+                    self.notifier.show_info(f"Model changed to: {new_model}")
+            except Exception as e:
+                logger.error(f"Failed to reload model: {e}")
+                print(f"[X] Failed to reload model: {e}")
+                self.notifier.show_error("Failed to reload model. Please restart CuteWhisper.")
+
+        # Check if device (CPU/GPU) changed
+        new_device = self.config.get('whisper.device', 'cpu')
+        old_device = self.transcriber.device
+
+        if new_device != old_device:
+            logger.info(f"Device changed: '{old_device}' -> '{new_device}'")
+            restart_needed = True
+            restart_reasons.append(f"GPU/CPU setting changed ({old_device} → {new_device})")
+
+        # Check if audio device changed
+        new_audio_device = self.config.get('audio.device')
+        old_audio_device = self.recorder.device
+
+        if new_audio_device != old_audio_device:
+            logger.info(f"Audio device changed: '{old_audio_device}' -> '{new_audio_device}'")
+            restart_needed = True
+            restart_reasons.append(f"Audio device changed")
+
+        # Check if sample rate changed
+        new_sample_rate = self.config.get('audio.sample_rate')
+        old_sample_rate = self.recorder.sample_rate
+
+        if new_sample_rate != old_sample_rate:
+            logger.info(f"Sample rate changed: {old_sample_rate} -> {new_sample_rate}")
+            restart_needed = True
+            restart_reasons.append(f"Sample rate changed")
+
+        # Show restart message if needed
+        if restart_needed:
+            reasons = "\n".join(f"• {r}" for r in restart_reasons)
+            message = f"Settings saved!\n\nSome changes require restart:\n{reasons}\n\nPlease restart CuteWhisper to apply these changes."
+            print(f"\n[INFO] {message}")
+            # Note: We don't show a toast here as the settings window already shows the warning
 
 
     def run(self):
