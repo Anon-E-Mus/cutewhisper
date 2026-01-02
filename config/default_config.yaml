@@ -1,0 +1,25 @@
+# CuteWhisper Default Configuration
+# Copy this file to user_config.yaml and customize as needed
+
+# Hotkey configuration
+hotkey:
+  toggle: 'ctrl+space'  # Press and hold to record
+
+# Audio settings
+audio:
+  sample_rate: 16000  # Whisper prefers 16kHz
+  channels: 1  # Mono audio
+
+# Whisper model settings
+whisper:
+  model_size: 'base'  # Options: tiny, base, small, medium, large
+  language: 'auto'  # Auto-detect language, or specify: en, es, fr, de, etc.
+  device: 'cpu'  # Options: cpu, cuda (if GPU available)
+  compute_type: 'int8'  # int8 for CPU, float16 for GPU
+
+# UI settings
+ui:
+  show_notifications: true
+  recording_indicator: true
+  use_clipboard: true  # Use clipboard+paste (false = typing)
+  preserve_clipboard: true  # Restore clipboard after paste

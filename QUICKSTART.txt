@@ -1,0 +1,104 @@
+═══════════════════════════════════════════════════════════
+  CuteWhisper - Quick Start Guide
+═══════════════════════════════════════════════════════════
+
+GETTING STARTED IN 3 STEPS
+═══════════════════════════════════════════════════════════
+
+1. Double-click "CuteWhisper.exe"
+
+2. Wait for "Model loaded and ready!" message
+   (First run downloads ~74MB - one time only)
+
+3. Start dictating:
+   • Open any text application (Notepad, Word, etc.)
+   • Press and hold Ctrl+Space
+   • Speak
+   • Release Ctrl+Space
+   • Text appears automatically!
+
+
+USING CUTEWHISPER
+═══════════════════════════════════════════════════════════
+
+Basic Controls:
+  Ctrl+Space (hold) → Record audio
+  Release         → Transcribe and paste
+
+Tray Icon Menu:
+  Right-click tray icon → Settings
+  Right-click tray icon → History (view past transcriptions)
+  Right-click tray icon → Quit
+
+
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════
+
+Text not appearing?
+  • Click in the text field before dictating
+  • Make sure the application window is active
+
+Microphone not working?
+  • Check microphone is plugged in
+  • Set as default in Windows Sound Settings
+  • Restart CuteWhisper
+
+Transcription too slow?
+  • Open Settings → Whisper → Select smaller model (tiny/base)
+  • Close other applications to free up RAM
+
+
+SETTINGS
+═══════════════════════════════════════════════════════════
+
+To change settings:
+  1. Right-click the CuteWhisper tray icon
+  2. Select "Settings"
+  3. Make changes
+  4. Click "Save"
+
+Popular Settings:
+  • Change hotkey (Settings → General → Hotkey)
+  • Select different model (Settings → Whisper → Model Size)
+  • Enable GPU (Settings → Whisper → Use GPU acceleration)
+
+
+MODEL SIZES
+═══════════════════════════════════════════════════════════
+
+  tiny   (39 MB)  ⚡⚡⚡ Fastest   - Quick notes
+  base   (74 MB)  ⚡⚡       Best value ✓ RECOMMENDED
+  small  (244 MB) ⚡         More accurate
+  medium (769 MB) ⚡         Multiple languages
+  large  (1.5 GB) 🐌         Most accurate
+
+
+SYSTEM REQUIREMENTS
+═══════════════════════════════════════════════════════════
+
+Minimum:
+  • Windows 10/11 (64-bit)
+  • 4GB RAM
+  • 500MB free disk space
+
+Recommended:
+  • Windows 11 (64-bit)
+  • 8GB RAM
+  • NVIDIA GPU (for faster transcription)
+
+
+SUPPORT
+═══════════════════════════════════════════════════════════
+
+For detailed documentation:
+  • INSTALL.md  - Complete installation guide
+  • README.md   - Full user guide
+  • BUILD.md    - Build your own executable
+
+For issues or questions:
+  • Check "logs/cutewhisper.log" for error details
+
+
+═══════════════════════════════════════════════════════════
+  Enjoy dictating! 🎤 → 📝
+═══════════════════════════════════════════════════════════
