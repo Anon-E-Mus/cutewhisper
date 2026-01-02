@@ -248,6 +248,9 @@ class SettingsWindow:
 
                 self.config.set(key, value)
 
+            # Persist to file
+            self.config.save_config()
+
             logger.info("Settings saved successfully")
 
             # Build warning message

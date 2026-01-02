@@ -1,5 +1,5 @@
 """
-Audio Visualizer - Thin rounded bars in rectangular window
+Audio Visualizer - Video + Audio bars in rectangular window
 """
 
 import tkinter as tk
@@ -8,6 +8,23 @@ import threading
 import logging
 import numpy as np
 import math
+import os
+from pathlib import Path
+
+# Try to import video processing libraries
+try:
+    import cv2
+    HAS_VIDEO = True
+except ImportError:
+    HAS_VIDEO = False
+    logger.warning("OpenCV not found - video playback disabled")
+
+try:
+    from PIL import Image, ImageTk
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
+    logger.warning("PIL not found - video playback disabled")
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +42,84 @@ class AudioVisualizerWindow:
         self.lock = threading.Lock()
         self.current_audio_level = 0.0
 
-        # Rectangular window dimensions
-        self.width = 160
+        # Video settings
+        self.video_width = 40  # Width for video display
+        self.video_cap = None
+        self.video_frames = []
+        self.current_frame = 0
+        self.video_image = None
+        self.video_canvas_id = None
+
+        # Window dimensions (video + audio bars)
+        self.bars_width = 160  # Width for audio bars section
+        self.width = self.video_width + self.bars_width  # Total width
         self.height = 40
 
         # Bar configuration - more bars, thinner
         self.num_bars = 16  # Number of bars
         self.bar_width = 4   # Thinner bars
         self.bar_spacing = 4
+
+        # Load video
+        self._load_video()
+
+    def _load_video(self):
+        """Load video file and extract frames"""
+        if not HAS_VIDEO or not HAS_PIL:
+            logger.warning("Video libraries not available")
+            return
+
+        try:
+            # Find video file in assets folder
+            script_dir = Path(__file__).parent.parent
+            video_path = script_dir / "assets" / "cute_cat.mp4"
+
+            if not video_path.exists():
+                logger.warning(f"Video file not found: {video_path}")
+                return
+
+            # Open video
+            cap = cv2.VideoCapture(str(video_path))
+
+            if not cap.isOpened():
+                logger.warning("Could not open video file")
+                return
+
+            # Extract frames
+            self.video_frames = []
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            frame_skip = int(fps / 10)  # Limit to 10 frames per second
+
+            frame_count = 0
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                # Skip frames to reduce memory
+                if frame_count % frame_skip == 0:
+                    # Convert BGR to RGB
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                    # Resize to fit video area
+                    frame_resized = cv2.resize(frame_rgb, (self.video_width, self.height))
+
+                    # Convert to PIL Image
+                    from PIL import Image
+                    img = Image.fromarray(frame_resized)
+                    self.video_frames.append(ImageTk.PhotoImage(img))
+
+                frame_count += 1
+
+            cap.release()
+
+            if self.video_frames:
+                logger.info(f"Loaded {len(self.video_frames)} frames from video")
+            else:
+                logger.warning("No frames extracted from video")
+
+        except Exception as e:
+            logger.error(f"Error loading video: {e}")
 
     def show(self):
         """Thread-safe show"""
@@ -85,6 +172,24 @@ class AudioVisualizerWindow:
             )
             self.canvas.pack()
 
+            # Display video if available
+            if self.video_frames:
+                self.video_canvas_id = self.canvas.create_image(
+                    self.video_width // 2,
+                    self.height // 2,
+                    image=self.video_frames[0],
+                    anchor='center'
+                )
+            else:
+                # Draw placeholder if no video
+                self.canvas.create_rectangle(
+                    2, 2,
+                    self.video_width - 2,
+                    self.height - 2,
+                    fill='#1a1a1a',
+                    outline=''
+                )
+
             # Create audio bars with rounded tops
             self._create_bars()
 
@@ -96,9 +201,10 @@ class AudioVisualizerWindow:
 
     def _create_bars(self):
         """Create audio bars on canvas - CAPSULE SHAPE (rectangle + rounded ends)"""
-        # Calculate total width and center it
+        # Calculate total width and center it within the bars section
         total_width = (self.num_bars * self.bar_width) + ((self.num_bars - 1) * self.bar_spacing)
-        start_x = (self.width - total_width) // 2
+        # Start bars after video section, centered within bars area
+        start_x = self.video_width + ((self.bars_width - total_width) // 2)
         y_center = self.height // 2
 
         for i in range(self.num_bars):
@@ -173,12 +279,17 @@ class AudioVisualizerWindow:
             logger.debug(f"Audio level calculation error: {e}")
 
     def _animate(self):
-        """Animation loop - symmetrical wave pattern with capsule-shaped bars"""
+        """Animation loop - video + symmetrical wave pattern with capsule-shaped bars"""
         if not self.running or not self.window:
             return
 
         try:
-            # Create symmetrical wave pattern
+            # Update video frame
+            if self.video_frames and self.video_canvas_id:
+                self.current_frame = (self.current_frame + 1) % len(self.video_frames)
+                self.canvas.itemconfig(self.video_canvas_id, image=self.video_frames[self.current_frame])
+
+            # Create symmetrical wave pattern for audio bars
             for i, bar in enumerate(self.bars):
                 # Symmetrical position from center
                 center_index = (self.num_bars - 1) / 2
